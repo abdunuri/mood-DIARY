@@ -7,7 +7,6 @@ from datetime import datetime
 import sqlite3
 import os
 from dotenv import load_dotenv
-from urllib.parse import urlparse
 
 import psycopg2
 # States for conversation handler
@@ -28,15 +27,7 @@ if not DATABASE_URL:
 # Database setup
 def setup_database():
     #use postgresql
-    url = urlparse(os.getenv("DATABASE_URL"))
-
-    conn = psycopg2.connect(
-        dbname=url.path[1:],  # remove leading "/"
-        user=url.username,
-        password=url.password,
-        host=url.hostname,
-        port=url.port
-    )
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS moods (
