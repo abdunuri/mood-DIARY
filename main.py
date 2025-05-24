@@ -7,7 +7,9 @@ from datetime import datetime
 import sqlite3
 import os
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
+import psycopg2
 # States for conversation handler
 SELECTING_MOOD, ADDING_NOTE = range(2)
 
@@ -20,31 +22,43 @@ else:
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 if not TELEGRAM_BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN not found in .env file. Please set it.")
-
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL not found in .env file. Please set it.")
 # Database setup
 def setup_database():
-    conn = sqlite3.connect("mood_diary.db")
+    #use postgresql
+    url = urlparse(os.getenv("DATABASE_URL"))
+
+    conn = psycopg2.connect(
+        dbname=url.path[1:],  # remove leading "/"
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS moods (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL,
             mood TEXT NOT NULL,
             note TEXT,
             date TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
     conn.close()
 
 def save_mood(user_id, mood, note=None):
-    conn = sqlite3.connect("mood_diary.db")
+    #change to postgresql
+    conn= psycopg2.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     formatted_date = datetime.now().strftime('%A, %B %d, %Y')
     cursor.execute('''
         INSERT INTO moods (user_id, mood, note,date)
-        VALUES (?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s)
     ''', (user_id, mood, note, formatted_date))
     conn.commit()
     conn.close()
@@ -132,12 +146,13 @@ async def add_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     if context.user_data.get('is_update'):
         # Update existing entry
-        conn = sqlite3.connect("mood_diary.db")
+        #change to postgresql
+        conn=psycopg2.connect(os.getenv('DATABASE_URL'))
         cursor = conn.cursor()
         cursor.execute('''
             UPDATE moods 
-            SET mood = ?, note = ?, timestamp = CURRENT_TIMESTAMP
-            WHERE id = ?
+            SET mood = %s, note = %s, timestamp = CURRENT_TIMESTAMP
+            WHERE id = %s
         ''', (mood, note, context.user_data['existing_id']))
         conn.commit()
         conn.close()
@@ -182,14 +197,15 @@ async def skip_note(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def weekly_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    conn = sqlite3.connect("mood_diary.db")
+    #change to postgresql
+    conn=psycopg2.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     
     # Get last 7 days of data
     cursor.execute('''
         SELECT mood, COUNT(*) as count 
         FROM moods
-        WHERE user_id = ? 
+        WHERE user_id = %s
         AND date >= date('now', '-7 days')
         GROUP BY mood
     ''', (user_id,))
@@ -224,13 +240,14 @@ async def weekly_stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    conn = sqlite3.connect("mood_diary.db")
+    #change to postgresql
+    conn=psycopg2.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     
     cursor.execute('''
         SELECT date, mood, note 
         FROM moods
-        WHERE user_id = ?
+        WHERE user_id = %s
         ORDER BY date DESC
     ''', (user_id,))
     results = cursor.fetchall()
@@ -266,11 +283,12 @@ async def summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    conn = sqlite3.connect("mood_diary.db")
+    #change to postgresql
+    conn=psycopg2.connect(os.getenv('DATABASE_URL'))
     cursor = conn.cursor()
     cursor.execute('''
         SELECT mood, COUNT(*) as count FROM moods
-        WHERE user_id=?
+        WHERE user_id= %s
         GROUP BY mood
     ''', (user_id,))
     results = cursor.fetchall()
