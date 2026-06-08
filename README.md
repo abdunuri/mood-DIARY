@@ -1,80 +1,46 @@
-# Mood Diary Telegram Bot 🌟
+# Mood Diary Telegram Bot
 
-A Telegram bot for tracking daily moods with statistics and analytics.
+Mood Diary is a Telegram bot for recording daily moods, adding short notes, and reviewing personal mood history through simple bot commands.
+
+## Main Concept
+
+The bot gives each user a private mood journal inside Telegram. Users can log one mood per day, attach an optional note, update the current day's entry, and view statistics or history from the SQLite database.
 
 ## Features
 
-- ✅ Daily mood logging (Happy, Sad, Angry, Neutral)
-- 📊 Weekly statistics with visual charts
-- 📝 Note-taking with each mood entry
-- 🔄 Update existing entries
-- 📅 History and summary views
-- 🗑️ Data clearing functionality
+- Daily mood logging with inline buttons
+- Optional note for each mood entry
+- Update today's saved mood
+- Overall mood statistics
+- Weekly mood summary
+- Full mood history
+- Clear all saved mood data with confirmation
 
-## Commands
-/start - Welcome message
-/mood - Record today's mood
-/update - Update today's mood
-/stats - View mood statistics
-/weekly - Weekly mood report
-/summary - Full mood history
-/clear - Delete all your data
-/help - Show all commands
+## Tech Stack
 
+- Python
+- `python-telegram-bot`
+- SQLite
+- `python-dotenv`
 
 ## Setup
 
-### Prerequisites
-
-- Python 3.8+
-- Docker (optional)
-- Telegram Bot Token
-
-### Local Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/abdunuri/mood-DIARY
-   cd mood-DIARY
-Create and activate virtual environment:
-
-bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate    # Windows
-Install dependencies:
-
-bash
+```bash
 pip install -r requirements.txt
-Create .env file:
+```
 
-bash
-echo "TELEGRAM_BOT_TOKEN=your_bot_token_here" > .env
-Run the bot:
+Create `.env`:
 
-bash
+```env
+TELEGRAM_BOT_TOKEN=your_bot_token
+```
+
+Run:
+
+```bash
 python main.py
-Docker Setup
-Build the image:
+```
 
-bash
-docker build -t mood-diary-bot .
-Run the container:
+## Data Storage
 
-bash
-docker run -d --name mood-bot -e TELEGRAM_BOT_TOKEN=your_token_here mood-diary-bot
-Database
-The bot uses SQLite stored in mood_diary.db. For Docker, mount a volume to persist data:
-
-bash
-docker run -d -v ./mood_data:/app mood-diary-bot
-Requirements
-python-telegram-bot==20.3
-
-python-dotenv==1.0.0
-
-sqlite3 (built-in)
-
-License
-MIT License
-
+Mood entries are stored locally in `mood_diary.db`. Keep that file backed up if the bot is used long term.
